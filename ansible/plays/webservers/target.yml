@@ -1,0 +1,11 @@
+---
+- name: Set webservers to multi target mode
+  hosts: webservers
+  become: true
+
+  tasks:
+  - name: Ensure webservers are in multi target mode
+    ansible.builtin.command:
+      cmd: systemctl set-default multi-user.target
+    register: systemctl_output
+    changed_when: "'is already' not in systemctl_output.stdout"

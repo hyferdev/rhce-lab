@@ -20,3 +20,6 @@ echo "--- 4. Configuring Passwordless Sudo ---"
 ansible all -b -m copy -a "content='automation ALL=(ALL) NOPASSWD: ALL' dest=/etc/sudoers.d/automation mode=0440 validate='visudo -cf %s'"
 
 echo "--- Setup Complete ---"
+
+# Example command to verify if a package is installed on a specific host
+#ansible proxy -m shell -a "rpm -q --all | grep -i python" -v

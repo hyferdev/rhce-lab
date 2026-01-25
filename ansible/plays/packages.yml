@@ -1,0 +1,22 @@
+---
+- name: Install Tcpdump and Mailx on proxy server
+  hosts: proxy
+  become: true
+
+  tasks:
+  - name: Ensure Tcpdump and Mailx are installed
+    ansible.builtin.command:
+      cmd: dnf install -y tcpdump mailx
+    register: dnf_output
+    changed_when: "'Nothing to do' not in dnf_output.stdout"
+
+- name: Install Lsof and Mailx on database server
+  hosts: database
+  become: true
+
+  tasks:
+  - name: Ensure Lsof and Mailx are installed
+    ansible.builtin.command:
+      cmd: dnf install -y lsof mailx
+    register: dnf_output
+    changed_when: "'Nothing to do' not in dnf_output.stdout"
