@@ -1,0 +1,29 @@
+- name: Configure SSHD on all servers
+  hosts: all
+  become: yes
+
+  tasks:
+  - name: Set Max retries to 3
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      search_string: MaxAuthTries
+      line: MaxAuthTries 3
+    notify: Restart sshd
+  - name: Set SSHD Banner to MOTD
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      search_string: Banner none
+      line: Banner /etc/motd
+    notify: Restart sshd
+  - name: Disable X11 Forwarding
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      search_string: X11Forwarding yes
+      line: X11Forwarding no
+    notify: Restart sshd
+  
+  handlers:
+  - name: Restart sshd
+    service:
+      name: sshd
+      state: restarted

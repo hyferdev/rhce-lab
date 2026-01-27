@@ -22,4 +22,4 @@ ansible all -b -m copy -a "content='automation ALL=(ALL) NOPASSWD: ALL' dest=/et
 echo "--- Setup Complete ---"
 
 # Example command to verify if a package is installed on a specific host
-#ansible proxy -m shell -a "rpm -q --all | grep -i python" -v
+#ansible proxy -m raw -a "rpm -q --all | grep -i python" -v

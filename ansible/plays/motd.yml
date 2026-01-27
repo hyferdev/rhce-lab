@@ -1,0 +1,41 @@
+- name: Update Proxy Message of the Day
+  hosts: proxy
+  become: yes
+
+  tasks:
+  - name: Set custom MOTD
+    copy:
+      content: "\u001b[32mWelcome to HAProxy server\u001b[0m\n"
+      dest: /etc/motd
+  - name: Remove RHEL MOTD
+    file:
+      name: /etc/motd.d/insights-client
+      state: absent
+
+- name: Update Webservers Message of the Day
+  hosts: webservers
+  become: yes
+
+  tasks:
+  - name: Set custom MOTD
+    copy:
+      content: "\u001b[32mWelcome to Apache server\u001b[0m\n"
+      dest: /etc/motd
+  - name: Remove RHEL MOTD
+    file:
+      name: /etc/motd.d/insights-client
+      state: absent
+
+- name: Update Database Message of the Day
+  hosts: database
+  become: yes
+
+  tasks:
+  - name: Set custom MOTD
+    copy:
+      content: "\u001b[32mWelcome to MySQL server\u001b[0m\n"
+      dest: /etc/motd
+  - name: Remove RHEL MOTD
+    file:
+      name: /etc/motd.d/insights-client
+      state: absent

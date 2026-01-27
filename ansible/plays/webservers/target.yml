@@ -1,4 +1,3 @@
----
 - name: Set webservers to multi target mode
   hosts: webservers
   become: true
