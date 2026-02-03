@@ -1,11 +1,5 @@
 # .github/workflows/terraform.yml
 
-# To trigger runs via CLI, use package 'gh'
-# Trigger an Apply (default)
-#gh workflow run terraform.yml --ref <branch> -f action=apply
-# Trigger a Destroy
-#gh workflow run terraform.yml --ref <branch> -f action=destroy
-
 name: "Terraform Infrastructure"
 
 on:
@@ -30,9 +24,17 @@ on:
         - destroy
 
 jobs:
-  terraform:
-    name: "Terraform"
+  # ============================================================================
+  # JOB 1: PLAN
+  # ============================================================================
+  terraform-plan:
+    name: "Terraform Plan"
     runs-on: ubuntu-latest
+    
+    # Selects Environment based on branch
+    # This automatically loads the correct TF_API_TOKEN for that user.
+    environment: ${{ (github.ref == 'refs/heads/main' && 'production') || github.ref_name }}
+    
     defaults:
       run:
         working-directory: ./terraform
@@ -40,105 +42,53 @@ jobs:
       contents: read
       pull-requests: write
 
-    # Load ALL user tokens into the Environment.
-    env:
-      # The main repo owner's token
-      TOKEN_MAIN: ${{ secrets.TF_API_TOKEN }}
-      # Add tokens for other users here
-      TOKEN_NATASHA: ${{ secrets.TF_API_TOKEN_NATASHA }}
-      TOKEN_FRE: ${{ secrets.TF_API_TOKEN_FRE }}
-      TOKEN_PAT: ${{ secrets.TF_API_TOKEN_PAT }}
-      TOKEN_LESLIE: ${{ secrets.TF_API_TOKEN_LESLIE }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # --- Dynamic Backend & Auth Configuration ---
       - name: Configure Dynamic Backend & Auth
         shell: bash
+        # Load the secret from the current Environment
+        env:
+          ENV_SPECIFIC_TOKEN: ${{ secrets.TF_API_TOKEN }}
         run: |
-          # 1. Extract Branch Name
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             BRANCH="${{ github.head_ref }}"
           else
             BRANCH="${{ github.ref_name }}"
           fi
           
-          echo "Detected Branch: $BRANCH"
-          
-          # 2. Determine Org, Workspace, and TOKEN based on Branch
+          # Map Branch to TFC Organization & Workspace
+          # Note: We do NOT need to select the token here; ENV_SPECIFIC_TOKEN is already correct.
           case "$BRANCH" in
-            "main")
-              TF_ORG="Hyfer-Org"
-              WORKSPACE="rhce-lab"
-              SELECTED_TOKEN=$TOKEN_MAIN
-              ;;
-            "user/natasha")
-              TF_ORG="Hashiblack"
-              WORKSPACE="rhce-lab"
-              SELECTED_TOKEN=$TOKEN_NATASHA
-              ;;
-            "user/fre")
-              TF_ORG="frezdbanjhi"
-              WORKSPACE="rhce-lab"
-              SELECTED_TOKEN=$TOKEN_FRE
-              ;;
-            "user/pat")
-              # PAT BYPASS: Do not configure TFC backend
-              echo "User Pat selected bypass mode (Local State/No Backend)."
-              SKIP_TFC="true"
-              ;;
-            "user/leslie")
-              TF_ORG="Leslie-Cloud-Org"
-              WORKSPACE="rhce-lab"
-              SELECTED_TOKEN=$TOKEN_LESLIE
-              ;;
-            user/*)
-              # Fallback for unmapped users (Defaults to Main credentials/Org)
-              USER_PART=${BRANCH#user/}
-              TF_ORG="Hyfer-Org"
-              WORKSPACE="rhce-lab-${USER_PART}"
-              SELECTED_TOKEN=$TOKEN_MAIN
-              ;;
+            "main")         TF_ORG="Hyfer-Org";           WORKSPACE="rhce-lab" ;;
+            "user/natasha") TF_ORG="Hashiblack";          WORKSPACE="rhce-lab" ;;
+            "user/fre")     TF_ORG="frezdbanjhi";         WORKSPACE="rhce-lab" ;;
+            "user/leslie")  TF_ORG="Leslie-Cloud-Org";    WORKSPACE="rhce-lab" ;;
+            "user/pat")     SKIP_TFC="true" ;;
             *)
-              TF_ORG="Hyfer-Org"
-              WORKSPACE="rhce-lab-dev"
-              SELECTED_TOKEN=$TOKEN_MAIN
+              echo "Error: Branch '$BRANCH' is not mapped to a TFC Workspace. Execution stopped."
+              exit 1
               ;;
           esac
           
-          # 3. Export Token and Create Backend (Unless Skipped)
           if [ "$SKIP_TFC" != "true" ]; then
-            echo "Targeting TFC Organization: $TF_ORG"
-            echo "Targeting TFC Workspace: $WORKSPACE"
+            # Export the environment-specific token for Terraform to use
+            echo "TF_TOKEN_app_terraform_io=$ENV_SPECIFIC_TOKEN" >> $GITHUB_ENV
             
-            # Export Token for Terraform
-            echo "TF_TOKEN_app_terraform_io=$SELECTED_TOKEN" >> $GITHUB_ENV
-            
-            # Create backend.tf dynamically
             {
               echo "terraform {"
               echo "  cloud {"
               echo "    organization = \"$TF_ORG\""
-              echo "    workspaces {"
-              echo "      name = \"$WORKSPACE\""
-              echo "    }"
+              echo "    workspaces { name = \"$WORKSPACE\" }"
               echo "  }"
               echo "}"
             } > backend.tf
-            
-            # verify backend content (safe, contains no secrets)
-            cat backend.tf
-          else
-            echo "Skipping TFC Backend generation."
           fi
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          # terraform_version: 1.5.0
-          # Token is handled via Env Var (TF_TOKEN_app_terraform_io) set in previous step
           terraform_wrapper: false
 
       - name: Terraform Format
@@ -173,21 +123,13 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-
+            const output = `#### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
             <details><summary>Show Plan</summary>
-
             \`\`\`\n
             ${process.env.PLAN}
             \`\`\`
-
             </details>
-
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -195,12 +137,74 @@ jobs:
               body: output
             })
 
-      - name: Terraform Plan Status
+      - name: Check Plan Status
         if: steps.plan.outcome == 'failure' || steps.plan-destroy.outcome == 'failure'
         run: exit 1
 
+  # ============================================================================
+  # JOB 2: APPLY
+  # ============================================================================
+  terraform-apply:
+    name: "Terraform Apply"
+    needs: terraform-plan
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    
+    # Enforces Approval if configured in the Environment Settings
+    environment: ${{ (github.ref == 'refs/heads/main' && 'production') || github.ref_name }}
+    
+    defaults:
+      run:
+        working-directory: ./terraform
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure Dynamic Backend & Auth
+        shell: bash
+        env:
+          ENV_SPECIFIC_TOKEN: ${{ secrets.TF_API_TOKEN }}
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          
+          case "$BRANCH" in
+            "main")         TF_ORG="Hyfer-Org";          WORKSPACE="rhce-lab" ;;
+            "user/natasha") TF_ORG="Hashiblack";         WORKSPACE="rhce-lab" ;;
+            "user/fre")     TF_ORG="frezdbanjhi";        WORKSPACE="rhce-lab" ;;
+            "user/leslie")  TF_ORG="Leslie-Cloud-Org";   WORKSPACE="rhce-lab" ;;
+            "user/pat")     SKIP_TFC="true" ;;
+            *)
+              echo "Error: Branch '$BRANCH' is not mapped to a TFC Workspace. Execution stopped."
+              exit 1
+              ;;
+          esac
+          
+          if [ "$SKIP_TFC" != "true" ]; then
+            echo "TF_TOKEN_app_terraform_io=$ENV_SPECIFIC_TOKEN" >> $GITHUB_ENV
+            {
+              echo "terraform {"
+              echo "  cloud {"
+              echo "    organization = \"$TF_ORG\""
+              echo "    workspaces { name = \"$WORKSPACE\" }"
+              echo "  }"
+              echo "}"
+            } > backend.tf
+          fi
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
       - name: Terraform Apply
-        if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.action == 'apply') || (startsWith(github.ref, 'refs/heads/user/') && github.event_name == 'push')
+        if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (startsWith(github.ref, 'refs/heads/user/') && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')
         run: terraform apply -auto-approve -input=false
 
       - name: Terraform Destroy
