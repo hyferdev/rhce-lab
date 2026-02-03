@@ -33,7 +33,7 @@ jobs:
     
     # Selects Environment based on branch
     # This automatically loads the correct TF_API_TOKEN for that user.
-    environment: ${{ (github.ref == 'refs/heads/main' && 'production') || github.ref_name }}
+    environment: ${{ (github.ref == 'refs/heads/main' && 'production-plan') || format('{0}-plan', github.ref_name) }}
     
     defaults:
       run:
