@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - 'user/**' # Trigger on user branches
     paths:
       - 'terraform/**'
   pull_request:
@@ -33,14 +34,106 @@ jobs:
       contents: read
       pull-requests: write
 
+    # Load ALL user tokens into the Environment.
+    env:
+      # The main repo owner's token
+      TOKEN_MAIN: ${{ secrets.TF_API_TOKEN }}
+      # Add tokens for other users here
+      TOKEN_NATASHA: ${{ secrets.TF_API_TOKEN_NATASHA }}
+      TOKEN_FRE: ${{ secrets.TF_API_TOKEN_FRE }}
+      TOKEN_PAT: ${{ secrets.TF_API_TOKEN_PAT }}
+      TOKEN_LESLIE: ${{ secrets.TF_API_TOKEN_LESLIE }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
+      # --- Dynamic Backend & Auth Configuration ---
+      - name: Configure Dynamic Backend & Auth
+        shell: bash
+        run: |
+          # 1. Extract Branch Name
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BRANCH="${{ github.head_ref }}"
+          else
+            BRANCH="${{ github.ref_name }}"
+          fi
+          
+          echo "Detected Branch: $BRANCH"
+          
+          # 2. Determine Org, Workspace, and TOKEN based on Branch
+          case "$BRANCH" in
+            "main")
+              TF_ORG="Hyfer-Org"
+              WORKSPACE="rhce-lab"
+              SELECTED_TOKEN=$TOKEN_MAIN
+              ;;
+            "user/natasha")
+              TF_ORG="Hashiblack"
+              WORKSPACE="rhce-lab"
+              SELECTED_TOKEN=$TOKEN_NATASHA
+              ;;
+            "user/fre")
+              TF_ORG="frezdbanjhi"
+              WORKSPACE="rhce-lab"
+              SELECTED_TOKEN=$TOKEN_FRE
+              ;;
+            "user/pat")
+              # PAT BYPASS: Do not configure TFC backend
+              echo "User Pat selected bypass mode (Local State/No Backend)."
+              SKIP_TFC="true"
+              ;;
+            "user/leslie")
+              TF_ORG="Leslie-Cloud-Org"
+              WORKSPACE="rhce-lab"
+              SELECTED_TOKEN=$TOKEN_LESLIE
+              ;;
+            user/*)
+              # Fallback for unmapped users (Defaults to Main credentials/Org)
+              USER_PART=${BRANCH#user/}
+              TF_ORG="Hyfer-Org"
+              WORKSPACE="rhce-lab-${USER_PART}"
+              SELECTED_TOKEN=$TOKEN_MAIN
+              ;;
+            *)
+              TF_ORG="Hyfer-Org"
+              WORKSPACE="rhce-lab-dev"
+              SELECTED_TOKEN=$TOKEN_MAIN
+              ;;
+          esac
+          
+          # 3. Export Token and Create Backend (Unless Skipped)
+          if [ "$SKIP_TFC" != "true" ]; then
+            echo "Targeting TFC Organization: $TF_ORG"
+            echo "Targeting TFC Workspace: $WORKSPACE"
+            
+            # Export Token for Terraform
+            echo "TF_TOKEN_app_terraform_io=$SELECTED_TOKEN" >> $GITHUB_ENV
+            
+            # Create backend.tf dynamically
+            cat <<EOF > backend.tf
+            terraform {
+              cloud {
+                organization = "$TF_ORG"
+                workspaces {
+                  name = "$WORKSPACE"
+                }
+              }
+            }
+            EOF
+            
+            # verify backend content (safe, contains no secrets)
+            cat backend.tf
+          else
+            echo "Skipping TFC Backend generation."
+          fi
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          # terraform_version: 1.5.0
+          # Token is handled via Env Var (TF_TOKEN_app_terraform_io) set in previous step
+          terraform_wrapper: false
 
       - name: Terraform Format
         id: fmt
@@ -101,7 +194,7 @@ jobs:
         run: exit 1
 
       - name: Terraform Apply
-        if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')
+        if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.action == 'apply') || (startsWith(github.ref, 'refs/heads/user/') && github.event_name == 'push')
         run: terraform apply -auto-approve -input=false
 
       - name: Terraform Destroy

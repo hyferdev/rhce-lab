@@ -35,3 +35,25 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Ignore VSCode settings directory
+.vscode/
+
+# --- Ansible Lab Specifics ---
+*.retry
+ansible/inventory
+ansible/inventory.ini
+ansible/ssh.cfg
+# Allow the example config, ignore the real one if it contains secrets
+ansible/ansible.cfg
+
+# --- SSH Keys & Secrets ---
+*.pem
+*.pub
+automation_key
+id_rsa
+known_hosts
+
+# --- OS/IDE ---
+.DS_Store
+.idea/
