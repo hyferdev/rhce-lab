@@ -1,5 +1,11 @@
 # .github/workflows/terraform.yml
 
+# To trigger runs via CLI, use package 'gh'
+# Trigger an Apply (default)
+#gh workflow run terraform.yml --ref <branch> -f action=apply
+# Trigger a Destroy
+#gh workflow run terraform.yml --ref <branch> -f action=destroy
+
 name: "Terraform Infrastructure"
 
 on:
@@ -111,16 +117,16 @@ jobs:
             echo "TF_TOKEN_app_terraform_io=$SELECTED_TOKEN" >> $GITHUB_ENV
             
             # Create backend.tf dynamically
-            cat <<EOF > backend.tf
-            terraform {
-              cloud {
-                organization = "$TF_ORG"
-                workspaces {
-                  name = "$WORKSPACE"
-                }
-              }
-            }
-            EOF
+            {
+              echo "terraform {"
+              echo "  cloud {"
+              echo "    organization = \"$TF_ORG\""
+              echo "    workspaces {"
+              echo "      name = \"$WORKSPACE\""
+              echo "    }"
+              echo "  }"
+              echo "}"
+            } > backend.tf
             
             # verify backend content (safe, contains no secrets)
             cat backend.tf
