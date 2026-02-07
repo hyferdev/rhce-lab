@@ -1,5 +1,9 @@
 # modules/networking/main.tf
 
+# --- Data Source: Fetch Available AZs in the current Region ---
+data "aws_availability_zones" "available" {
+  state = "available"
+}
 resource "aws_vpc" "lab_vpc" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_support   = true
