@@ -35,7 +35,7 @@ This project uses a **Dynamic Multi-User Workflow** to allow multiple team membe
 
 The workflow dynamically detects the **Branch Name** to determine where to deploy.
 
-| CURRENT USERS |
+**Current Users:**
 | Branch | TFC Org | Workspace | Auth Method |
 | :--- | :--- | :--- | :--- |
 | `main` | `Hyfer-Org` | `rhce-lab` | Prod Secret (Requires Approval) |
