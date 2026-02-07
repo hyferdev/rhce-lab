@@ -1,5 +1,10 @@
 # modules/compute/main.tf
 
+# --- Data Source: Look up the AZ of the provided Subnet ---
+data "aws_subnet" "selected" {
+  id = var.subnet_id
+}
+
 # --- Key Generation (Internal Cluster Key) ---
 resource "tls_private_key" "lab_key" {
   algorithm = "RSA"
@@ -178,6 +183,7 @@ resource "aws_instance" "db_node" {
   EOF
 }
 
+# --- DYNAMIC STORAGE AZ ---
 resource "aws_ebs_volume" "secondary_disk" {
   availability_zone = data.aws_subnet.selected.availability_zone
   size              = 1
