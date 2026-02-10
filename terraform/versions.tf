@@ -13,12 +13,4 @@ terraform {
       version = "~> 4.0"
     }
   }
-
-  cloud {
-    organization = "Hyfer-Org"
-
-    workspaces {
-      name = "rhce-lab"
-    }
-  }
 }
