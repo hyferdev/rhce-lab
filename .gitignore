@@ -1,3 +1,5 @@
+# Don't commit local variables
+envs/
 # Local .terraform directories
 .terraform/
 
