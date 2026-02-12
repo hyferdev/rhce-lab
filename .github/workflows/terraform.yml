@@ -65,6 +65,7 @@ jobs:
             "user/natasha") TF_ORG="Hashiblack";          WORKSPACE="rhce-lab" ;;
             "user/fre")     TF_ORG="frezdbanjhi";         WORKSPACE="rhce-lab" ;;
             "user/leslie")  TF_ORG="TechieWealth";        WORKSPACE="rhce-lab" ;;
+            "user/derek")   TF_ORG="dowusubekoe-dev";     WORKSPACE="rhce-lab" ;;
             "user/pat")     SKIP_TFC="true" ;;
             *)
               echo "Error: Branch '$BRANCH' is not mapped to a TFC Workspace. Execution stopped."
@@ -175,6 +176,7 @@ jobs:
             "user/natasha") TF_ORG="Hashiblack";         WORKSPACE="rhce-lab" ;;
             "user/fre")     TF_ORG="frezdbanjhi";        WORKSPACE="rhce-lab" ;;
             "user/leslie")  TF_ORG="TechieWealth";       WORKSPACE="rhce-lab" ;;
+            "user/derek")   TF_ORG="dowusubekoe-dev";    WORKSPACE="rhce-lab" ;;
             "user/pat")     SKIP_TFC="true" ;;
             *)
               echo "Error: Branch '$BRANCH' is not mapped to a TFC Workspace. Execution stopped."

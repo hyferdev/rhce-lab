@@ -42,6 +42,7 @@ The workflow dynamically detects the **Branch Name** to determine where to deplo
 | `user/fre` | `frezdbanjhi` | `rhce-lab` | Environment Secret (`user/fre`) |
 | `user/natasha`| `Hashiblack` | `rhce-lab` | Environment Secret (`user/natasha`) |
 | `user/leslie` | `Leslie-Cloud-Org`| `rhce-lab` | Environment Secret (`user/leslie`) |
+| `user/derek` | `dowusubekoe-dev` | `rhce-lab` | Environment Secret (`user/derek`) |
 | `user/pat` | **Local** | **Local** | **Bypass TFC** (Local State) |
 
 ---
