@@ -28,7 +28,7 @@ data "aws_ami" "rhel8" {
 # --- 1. Ansible Control Node ---
 resource "aws_instance" "control" {
   ami                    = data.aws_ami.rhel8.id
-  instance_type          = "t3.medium"
+  instance_type          = "t3.micro"
   subnet_id              = var.subnet_id
   key_name               = var.AWS_SSH_KEY
   vpc_security_group_ids = [var.security_group]
