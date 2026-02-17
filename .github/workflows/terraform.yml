@@ -61,11 +61,12 @@ jobs:
           # Map Branch to TFC Organization & Workspace
           # Note: We do NOT need to select the token here; ENV_SPECIFIC_TOKEN is already correct.
           case "$BRANCH" in
-            "main")         TF_ORG="Hyfer-Org";           WORKSPACE="rhce-lab" ;;
-            "user/natasha") TF_ORG="Hashiblack";          WORKSPACE="rhce-lab" ;;
-            "user/fre")     TF_ORG="frezdbanjhi";         WORKSPACE="rhce-lab" ;;
-            "user/leslie")  TF_ORG="TechieWealth";        WORKSPACE="rhce-lab" ;;
-            "user/derek")   TF_ORG="dowusubekoe-dev";     WORKSPACE="rhce-lab" ;;
+            "main")         TF_ORG="Hyfer-Org";                    WORKSPACE="rhce-lab" ;;
+            "user/natasha") TF_ORG="Hashiblack";                   WORKSPACE="rhce-lab" ;;
+            "user/fre")     TF_ORG="frezdbanjhi";                  WORKSPACE="rhce-lab" ;;
+            "user/leslie")  TF_ORG="TechieWealth";                 WORKSPACE="rhce-lab" ;;
+            "user/derek")   TF_ORG="dowusubekoe-dev";              WORKSPACE="rhce-lab" ;;
+            "user/sim")     TF_ORG="mathenjwas02-terraform-org";   WORKSPACE="rhce-lab" ;;
             "user/pat")     SKIP_TFC="true" ;;
             *)
               echo "Error: Branch '$BRANCH' is not mapped to a TFC Workspace. Execution stopped."
@@ -172,11 +173,12 @@ jobs:
           BRANCH="${{ github.ref_name }}"
           
           case "$BRANCH" in
-            "main")         TF_ORG="Hyfer-Org";          WORKSPACE="rhce-lab" ;;
-            "user/natasha") TF_ORG="Hashiblack";         WORKSPACE="rhce-lab" ;;
-            "user/fre")     TF_ORG="frezdbanjhi";        WORKSPACE="rhce-lab" ;;
-            "user/leslie")  TF_ORG="TechieWealth";       WORKSPACE="rhce-lab" ;;
-            "user/derek")   TF_ORG="dowusubekoe-dev";    WORKSPACE="rhce-lab" ;;
+            "main")         TF_ORG="Hyfer-Org";                    WORKSPACE="rhce-lab" ;;
+            "user/natasha") TF_ORG="Hashiblack";                   WORKSPACE="rhce-lab" ;;
+            "user/fre")     TF_ORG="frezdbanjhi";                  WORKSPACE="rhce-lab" ;;
+            "user/leslie")  TF_ORG="TechieWealth";                 WORKSPACE="rhce-lab" ;;
+            "user/derek")   TF_ORG="dowusubekoe-dev";              WORKSPACE="rhce-lab" ;;
+            "user/sim")     TF_ORG="mathenjwas02-terraform-org";   WORKSPACE="rhce-lab" ;;
             "user/pat")     SKIP_TFC="true" ;;
             *)
               echo "Error: Branch '$BRANCH' is not mapped to a TFC Workspace. Execution stopped."
