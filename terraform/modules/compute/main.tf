@@ -1,5 +1,10 @@
 # modules/compute/main.tf
 
+# --- Data Source: Look up the AZ of the provided Subnet ---
+data "aws_subnet" "selected" {
+  id = var.subnet_id
+}
+
 # --- Key Generation (Internal Cluster Key) ---
 resource "tls_private_key" "lab_key" {
   algorithm = "RSA"
@@ -23,7 +28,7 @@ data "aws_ami" "rhel8" {
 # --- 1. Ansible Control Node ---
 resource "aws_instance" "control" {
   ami                    = data.aws_ami.rhel8.id
-  instance_type          = "m7i-flex.large"
+  instance_type          = "t3.medium"
   subnet_id              = var.subnet_id
   key_name               = var.AWS_SSH_KEY
   vpc_security_group_ids = [var.security_group]
@@ -85,7 +90,7 @@ resource "aws_instance" "control" {
 resource "aws_instance" "managed" {
   count                  = 3
   ami                    = data.aws_ami.rhel8.id
-  instance_type          = "m7i-flex.large"
+  instance_type          = "t3.medium"
   subnet_id              = var.subnet_id
   key_name               = var.AWS_SSH_KEY
   vpc_security_group_ids = [var.security_group]
@@ -133,7 +138,7 @@ resource "aws_instance" "managed" {
 # --- 3. Database Node (ansible-db) with Extra Disk ---
 resource "aws_instance" "db_node" {
   ami                    = data.aws_ami.rhel8.id
-  instance_type          = "m7i-flex.large"
+  instance_type          = "t3.medium"
   subnet_id              = var.subnet_id
   key_name               = var.AWS_SSH_KEY
   vpc_security_group_ids = [var.security_group]
@@ -178,8 +183,9 @@ resource "aws_instance" "db_node" {
   EOF
 }
 
+# --- DYNAMIC STORAGE AZ ---
 resource "aws_ebs_volume" "secondary_disk" {
-  availability_zone = "us-east-1a"
+  availability_zone = data.aws_subnet.selected.availability_zone
   size              = 1
   tags = { Name = "ansible-db-secondary" }
 }

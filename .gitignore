@@ -57,3 +57,6 @@ known_hosts
 # --- OS/IDE ---
 .DS_Store
 .idea/
+
+# --- Random ---
+.archive
