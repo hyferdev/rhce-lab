@@ -1,14 +1,9 @@
 # .github/workflows/terraform.yml
 
 name: "Terraform Infrastructure"
+run-name: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'destroy' && 'Destroy' || 'Deploy' }} Terraform on ${{ github.ref_name }} branch
 
 on:
-  push:
-    branches:
-      - main
-      - 'user/**' # Trigger on user branches
-    paths:
-      - 'terraform/**'
   pull_request:
     paths:
       - 'terraform/**'
@@ -107,7 +102,7 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.action != 'destroy') || github.event_name == 'push'
+        if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.action != 'destroy')
         run: terraform plan -no-color -input=false
         continue-on-error: true
 
@@ -208,7 +203,7 @@ jobs:
         run: terraform init
 
       - name: Terraform Apply
-        if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (startsWith(github.ref, 'refs/heads/user/') && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'apply'
         run: terraform apply -auto-approve -input=false
 
       - name: Terraform Destroy
