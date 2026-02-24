@@ -1,0 +1,11 @@
+users:
+  - username: pat
+    uid: 3001
+  - username: leslie
+    uid: 3002
+  - username: sim
+    uid: 2001
+  - username: natasha
+    uid: 2002
+  - username: fre
+    uid: 2003
