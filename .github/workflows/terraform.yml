@@ -1,6 +1,7 @@
 # .github/workflows/terraform.yml
 
 name: "Terraform Infrastructure"
+run-name: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'destroy' && 'Destroy' || 'Deploy' }} Terraform Infrastructure on ${{ github.ref_name }} branch
 
 on:
   push:
