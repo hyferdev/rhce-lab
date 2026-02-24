@@ -1,0 +1,55 @@
+- name: Configure Webserver Users
+  hosts: webservers
+  become: true
+  vars_files:
+    - ../vars/user_list.yml
+    - secret.yml  # Your vaulted file containing 'user_password'
+
+  tasks:
+    - name: Create users starting with UID 1
+      user:
+        name: "{{ item.username }}"
+        uid: "{{ item.uid }}"
+        group: wheel
+        shell: /bin/bash
+        # The password_hash filter is required for the user module to accept it!
+        password: "{{ user_password | password_hash('sha512') }}"
+      loop: "{{ users }}"
+      # We cast uid to a string first, then check if it starts with '1'
+      when: (item.uid | string).startswith('3')
+
+    - name: Deploy SSH public key for webserver users
+      authorized_key:
+        user: "{{ item.username }}"
+        state: present
+        # Looks up your control node's public key to upload to the managed nodes
+        key: "{{ lookup('file', '/home/hyfer/.ssh/id_rsa.pub', errors='ignore') | default('ssh-rsa AAAA_DUMMY_KEY', true) }}"
+      loop: "{{ users }}"
+      when: (item.uid | string).startswith('3')
+
+
+- name: Configure Database Users
+  hosts: database
+  become: true
+  vars_files:
+    - ../vars/user_list.yml
+    - secret.yml
+
+  tasks:
+    - name: Create users starting with UID 2
+      user:
+        name: "{{ item.username }}"
+        uid: "{{ item.uid }}"
+        group: wheel
+        shell: /bin/bash
+        password: "{{ user_password | password_hash('sha512') }}"
+      loop: "{{ users }}"
+      when: (item.uid | string).startswith('2')
+
+    - name: Deploy SSH public key for database users
+      authorized_key:
+        user: "{{ item.username }}"
+        state: present
+        key: "{{ lookup('file', '/home/hyfer/.ssh/id_rsa.pub', errors='ignore') | default('ssh-rsa AAAA_DUMMY_KEY', true) }}"
+      loop: "{{ users }}"
+      when: (item.uid | string).startswith('2')
