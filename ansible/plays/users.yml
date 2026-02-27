@@ -15,7 +15,7 @@
         # The password_hash filter is required for the user module to accept it!
         password: "{{ user_password | password_hash('sha512') }}"
       loop: "{{ users }}"
-      # We cast uid to a string first, then check if it starts with '1'
+      # We cast uid to a string first, then check if it starts with '3'
       when: (item.uid | string).startswith('3')
 
     - name: Deploy SSH public key for webserver users
