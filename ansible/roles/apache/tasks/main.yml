@@ -1,0 +1,47 @@
+# ansible/roles/sample-apache/tasks/main.yml
+
+- name: Install required web packages
+  ansible.builtin.dnf:
+    name:
+      - httpd
+      - mod_ssl
+      - php
+      - firewalld
+      - python3-firewall
+    state: present
+
+- name: Ensure httpd is started and enabled
+  ansible.builtin.service:
+    name: httpd
+    state: started
+    enabled: yes
+
+- name: Ensure firewalld is started and enabled
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Open firewall ports for HTTP and HTTPS
+  ansible.builtin.command:
+    cmd: "firewall-cmd --permanent --add-service={{ item }}"
+  become: true
+  register: fw_status
+  changed_when: "'ALREADY_ENABLED' not in fw_status.stderr"
+  loop:
+    - http
+    - https
+
+- name: Reload firewall to apply immediate changes
+  ansible.builtin.command:
+    cmd: firewall-cmd --reload
+  # Only reload if the previous task actually made a change
+  when: fw_status.changed
+
+- name: Deploy index.html template
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+    owner: root
+    group: root
+    mode: '0644'

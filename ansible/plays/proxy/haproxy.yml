@@ -1,0 +1,52 @@
+---
+# ansible/plays/haproxy.yml
+
+- name: Configure HAProxy Load Balancer
+  hosts: proxy
+  become: yes
+  vars:
+    haproxy_backend_balance_method: 'roundrobin'
+    # We dynamically pass the webservers from our inventory into the HAProxy config
+    haproxy_backend_servers:
+      - name: "{{ groups['webservers'][0] }}"
+        address: "{{ groups['webservers'][0] }}:80"
+      - name: "{{ groups['webservers'][1] }}"
+        address: "{{ groups['webservers'][1] }}:80"
+
+  pre_tasks:
+    - name: Ensure firewalld and python bindings are installed
+      ansible.builtin.dnf:
+        name:
+          - firewalld
+          - python3-firewall
+        state: present
+
+    - name: Ensure firewalld is running
+      ansible.builtin.service:
+        name: firewalld
+        state: started
+        enabled: yes
+
+    - name: Open firewall ports for HTTP and HTTPS
+      ansible.builtin.command:
+        cmd: "firewall-cmd --permanent --add-service={{ item }}"
+      become: true
+      register: fw_status
+      changed_when: "'ALREADY_ENABLED' not in fw_status.stderr"
+      loop:
+        - http
+        - https
+
+    - name: Reload firewall to apply immediate changes
+      ansible.builtin.command:
+        cmd: firewall-cmd --reload
+      # Only reload if the previous task actually made a change
+      when: fw_status.changed
+
+    - name: Allow HAProxy to connect to backend network (SELinux)
+      ansible.builtin.command:
+        cmd: setsebool -P haproxy_connect_any on
+      become: true
+
+  roles:
+    - geerlingguy.haproxy

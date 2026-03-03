@@ -1,0 +1,7 @@
+# ansible/plays/webservers.yml
+
+- name: Deploy Web Infrastructure
+  hosts: webservers
+  become: yes
+  roles:
+    - apache
