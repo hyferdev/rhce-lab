@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: sample-mysql
+  author: hyfer
+  description: Storage setup for MySQL - partition, VG, and LV
+  min_ansible_version: "2.9"
+dependencies: []

@@ -1,0 +1,7 @@
+---
+- name: Configure storage for MySQL database server
+  hosts: database
+  become: true
+
+  roles:
+    - sample-mysql
